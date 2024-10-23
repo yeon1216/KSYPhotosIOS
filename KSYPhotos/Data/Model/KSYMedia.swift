@@ -11,7 +11,7 @@ import Photos
 struct KSYMedia: Equatable {
     let assetIdentifier: String
     var isLocallyAvailable: Bool
-    var type: MediaType
+    var type: KSYMediaType
     
     var asset: PHAsset? {
         get {
@@ -20,7 +20,7 @@ struct KSYMedia: Equatable {
         }
     }
     
-    enum MediaType: Int {
+    enum KSYMediaType: Int {
         case image = 0, video
     }
 }

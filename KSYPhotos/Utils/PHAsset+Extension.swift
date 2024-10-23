@@ -20,11 +20,11 @@ extension PHImageManager {
 
 extension PHAsset {
     
-    func getKSYMediaType() -> KSYMedia.MediaType? {
+    func getKSYMediaType() -> KSYMedia.KSYMediaType? {
         return if self.mediaType == .image {
-            KSYMedia.MediaType.image
+            KSYMedia.KSYMediaType.image
         } else if self.mediaType == .video {
-            KSYMedia.MediaType.video
+            KSYMedia.KSYMediaType.video
         } else {
             nil
         }

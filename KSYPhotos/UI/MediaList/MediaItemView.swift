@@ -36,14 +36,6 @@ struct MediaItem {
     @Dependency(\.mediaService) var mediaService
     private enum CancelID { case fetchSmallThumbnail, fetchThumbnail, loadVideo }
     
-    private func playVideo(asset: PHAsset) async -> AVPlayer? {
-        if let avAsset = await PHImageManager.default().requestAVAssetAsync(forVideo: asset, options: nil) {
-            let playerItem = AVPlayerItem(asset: avAsset)
-            return AVPlayer(playerItem: playerItem)
-        }
-        return nil
-    }
-    
     var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
@@ -105,7 +97,7 @@ struct MediaItem {
                 return .run { send in
                     await send(
                         .doneLoadVideo(
-                            TaskResult { await self.playVideo(asset: asset) }
+                            TaskResult { await VideoPlayerService.playVideo(asset: asset) }
                         )
                     )
                 }
@@ -149,9 +141,6 @@ struct MediaItemView: View {
                             Image(uiImage: viewStore.smallThumbnail!)
                                 .resizable()
                                 .renderingMode(.original)
-                                .onAppear {
-                                    viewStore.send(.fetchDetailThumbnail(viewStore.media, CGSize(width: 100, height: 100), false))
-                                }
                         }
                         if viewStore.detailThumbnail != nil {
                             Image(uiImage: viewStore.detailThumbnail!)
@@ -215,7 +204,7 @@ struct MediaDetailItemView: View {
                         if viewStore.media.type == .video {
                             if viewStore.player != nil {
                                 ZStack {
-                                    VideoPlayer(player: viewStore.player!)
+                                    VideoPlayerView(player: viewStore.player!)
                                         .disabled(true)
                                 }
                             }

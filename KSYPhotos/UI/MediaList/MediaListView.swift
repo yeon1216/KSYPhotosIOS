@@ -41,14 +41,19 @@ struct MediaList {
     @Reducer
     struct Destination {
         enum State: Equatable {
-            case fullScreenCover(EditMedia.State)
+            case imgEditFullScreenCover(EditMedia.State)
+            case videoEditFullScreenCover(EditVideoMedia.State)
         }
         enum Action {
-            case fullScreenCover(EditMedia.Action)
+            case imgEditFullScreenCover(EditMedia.Action)
+            case videoEditFullScreenCover(EditVideoMedia.Action)
         }
         var body: some ReducerOf<Self> {
-            Scope(state: \.fullScreenCover, action: \.fullScreenCover) {
+            Scope(state: \.imgEditFullScreenCover, action: \.imgEditFullScreenCover) {
                 EditMedia()
+            }
+            Scope(state: \.videoEditFullScreenCover, action: \.videoEditFullScreenCover) {
+                EditVideoMedia()
             }
         }
     }
@@ -122,7 +127,15 @@ struct MediaList {
             case .changeIsPresentedEditMediaSheet:
                 return .none
             case .editIconTapped:
-                state.destination = .fullScreenCover(EditMedia.State(media: state.selectedMedia!))
+                if let media = state.selectedMedia {
+                    if media.type == KSYMedia.KSYMediaType.image {
+                        state.destination = .imgEditFullScreenCover(EditMedia.State(media: state.selectedMedia!))
+                    }
+                    if media.type == KSYMedia.KSYMediaType.video {
+                        state.destination = .videoEditFullScreenCover(EditVideoMedia.State(media: state.selectedMedia!))
+                    }
+                }
+                
                 return .none
             case .destination:
               return .none
@@ -155,7 +168,6 @@ struct MediaListView: View {
                         Color.nenioWhite.ignoresSafeArea(.all)
                     }
                     detailContent
-//                        .transition(.move(edge: .bottom))
                         .transition(.opacity)
                 }
             }
@@ -169,10 +181,17 @@ struct MediaListView: View {
             .statusBarHidden(viewStore.viewMode == .detailMedia)
             .fullScreenCover(
                 store: self.store.scope(
-                    state: \.$destination.fullScreenCover, action: \.destination.fullScreenCover
+                    state: \.$destination.imgEditFullScreenCover, action: \.destination.imgEditFullScreenCover
                 )
             ) { store in
                 EditMediaView(store: store)
+            }
+            .fullScreenCover(
+                store: self.store.scope(
+                    state: \.$destination.videoEditFullScreenCover, action: \.destination.videoEditFullScreenCover
+                )
+            ) { store in
+                EditVideoMediaView(store: store)
             }
         }
     }
@@ -265,11 +284,15 @@ struct MediaListView: View {
     
     var mediaListView: some View {
         WithViewStore(self.store, observe: { $0 }) { viewStore in
-            ZStack {
+            GeometryReader { geometry in
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.fixed(100)), GridItem(.fixed(100)), GridItem(.fixed(100))], spacing: 0) {
+                    let spacing: CGFloat = 1
+                    let itemWidth = (geometry.size.width - (spacing * 3)) / 4
+                    LazyVGrid(columns: Array(repeating: GridItem(.fixed(itemWidth), spacing: spacing), count: 4), spacing: spacing) {
                         ForEachStore(self.store.scope(state: \.mediaList, action: \.mediaList)) { rowStore in
                             MediaItemView(store: rowStore)
+                                .aspectRatio(1, contentMode: .fill)
+                                .clipped()
                         }
                     }
                 }
